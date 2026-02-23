@@ -1,4 +1,4 @@
-module server
+module myfinproject
 
 go 1.24.10
 
