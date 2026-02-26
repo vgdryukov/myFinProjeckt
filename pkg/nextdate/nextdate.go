@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+const (
+	maxDayInterval = 400
+	maxIterations  = 1000
+	maxYearSearch  = 100
+	DateFormat     = "20060102"
+)
+
 // afterNow проверяет, что дата date больше даты now
 // Сравниваются только даты, без времени
 func afterNow(date, now time.Time) bool {
@@ -44,7 +51,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 	}
 
 	// Парсим начальную дату
-	date, err := time.Parse("20060102", dstart)
+	date, err := time.Parse(DateFormat, dstart)
 	if err != nil {
 		return "", fmt.Errorf("некорректная дата %s: %v", dstart, err)
 	}
@@ -88,8 +95,8 @@ func handleDayRule(now time.Time, date time.Time, parts []string) (string, error
 	if interval <= 0 {
 		return "", errors.New("интервал дней должен быть положительным числом")
 	}
-	if interval > 400 {
-		return "", errors.New("интервал дней не может превышать 400")
+	if interval > maxDayInterval {
+		return "", errors.New("интервал дней не может превышать " + strconv.Itoa(maxDayInterval))
 	}
 
 	// Ищем следующую дату
@@ -99,12 +106,12 @@ func handleDayRule(now time.Time, date time.Time, parts []string) (string, error
 			break
 		}
 		// Защита от бесконечного цикла
-		if date.Year() > now.Year()+100 {
+		if date.Year() > now.Year()+maxYearSearch {
 			return "", errors.New("не удалось найти следующую дату")
 		}
 	}
 
-	return date.Format("20060102"), nil
+	return date.Format(DateFormat), nil
 }
 
 // handleYearRule обрабатывает правило "y"
@@ -116,12 +123,12 @@ func handleYearRule(now time.Time, date time.Time) (string, error) {
 			break
 		}
 		// Защита от бесконечного цикла
-		if date.Year() > now.Year()+100 {
+		if date.Year() > now.Year()+maxYearSearch {
 			return "", errors.New("не удалось найти следующую дату")
 		}
 	}
 
-	return date.Format("20060102"), nil
+	return date.Format(DateFormat), nil
 }
 
 // handleWeekRule обрабатывает правило "w дни_недели"
@@ -155,7 +162,6 @@ func handleWeekRule(now time.Time, date time.Time, parts []string) (string, erro
 	currentDate := date.AddDate(0, 0, 1)
 
 	// Ограничим поиск 400 днями (максимальный период)
-	maxIterations := 1000
 	for i := 0; i < maxIterations; i++ {
 		// Получаем день недели в Go (0-6)
 		goWeekDay := int(currentDate.Weekday())
@@ -172,7 +178,7 @@ func handleWeekRule(now time.Time, date time.Time, parts []string) (string, erro
 			if ourWeekDay == allowedDay {
 				// Нашли подходящий день
 				if afterNow(currentDate, now) {
-					return currentDate.Format("20060102"), nil
+					return currentDate.Format(DateFormat), nil
 				}
 				// Если дата меньше now, продолжаем поиск
 				break
@@ -233,7 +239,6 @@ func handleMonthRule(now time.Time, date time.Time, parts []string) (string, err
 	}
 
 	currentDate := date.AddDate(0, 0, 1)
-	maxIterations := 1000
 
 	for i := 0; i < maxIterations; i++ {
 		if len(months) > 0 {
@@ -270,7 +275,7 @@ func handleMonthRule(now time.Time, date time.Time, parts []string) (string, err
 			}
 
 			if currentDay == targetDay && afterNow(currentDate, now) {
-				return currentDate.Format("20060102"), nil
+				return currentDate.Format(DateFormat), nil
 			}
 		}
 

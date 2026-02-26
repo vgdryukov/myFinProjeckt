@@ -3,10 +3,9 @@ package api
 
 import (
 	"log"
+	"myfinproject/pkg/nextdate"
 	"net/http"
 	"time"
-
-	"myfinproject/pkg/nextdate" // импортируем нашу функцию NextDate
 )
 
 // NextDateHandler обрабатывает запросы к /api/nextdate
@@ -19,29 +18,19 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Проверяем обязательные параметры
 	if dateStr == "" {
-		http.Error(w, "Не указан параметр date", http.StatusBadRequest)
+		writeError(w, "Не указан параметр date", http.StatusBadRequest)
 		return
 	}
 	if repeat == "" {
-		http.Error(w, "Не указан параметр repeat", http.StatusBadRequest)
+		writeError(w, "Не указан параметр repeat", http.StatusBadRequest)
 		return
 	}
 
 	// Определяем текущую дату (now)
-	var now time.Time
-	if nowStr == "" {
-		// Если now не указан, используем текущую дату
-		now = time.Now()
-		// Обрезаем время до начала дня
-		now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	} else {
-		// Парсим переданную дату now
-		var err error
-		now, err = time.Parse(DateFormat, nowStr)
-		if err != nil {
-			http.Error(w, "Неверный формат параметра now. Ожидается YYYYMMDD", http.StatusBadRequest)
-			return
-		}
+	now, err := parseNow(nowStr)
+	if err != nil {
+		writeError(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	// Вызываем функцию NextDate из пакета nextdate
@@ -49,7 +38,7 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// В случае ошибки возвращаем текст ошибки
 		log.Printf("Ошибка при вычислении следующей даты: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -57,4 +46,21 @@ func NextDateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(next))
+}
+
+// parseNow парсит параметр now или возвращает текущую дату
+func parseNow(nowStr string) (time.Time, error) {
+	if nowStr == "" {
+		// Если now не указан, используем текущую дату
+		now := time.Now()
+		// Обрезаем время до начала дня
+		return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()), nil
+	}
+
+	// Парсим переданную дату now
+	now, err := time.Parse(nextdate.DateFormat, nowStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return now, nil
 }

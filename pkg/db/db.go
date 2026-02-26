@@ -69,6 +69,11 @@ func Init(dbFile string) error {
 	// Сохраняем подключение в глобальной переменной
 	DB = db
 
+	// Проверяем, что таблица существует и имеет правильную структуру
+	if err := migrateDB(); err != nil {
+		log.Printf("Предупреждение при проверке схемы БД: %v", err)
+	}
+
 	log.Printf("База данных %s успешно подключена", dbFile)
 	return nil
 }
@@ -84,4 +89,31 @@ func Close() error {
 // GetDB возвращает текущее подключение к БД
 func GetDB() *sql.DB {
 	return DB
+}
+
+// AddTask добавляет новую задачу в базу данных
+// Возвращает ID добавленной задачи
+func AddTask(task *Task) (int64, error) {
+	query := `
+		INSERT INTO scheduler (date, title, comment, repeat) 
+		VALUES (?, ?, ?, ?)
+	`
+
+	result, err := DB.Exec(query, task.Date, task.Title, task.Comment, task.Repeat)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+// migrateDB проверяет и обновляет схему БД при необходимости
+func migrateDB() error {
+	_, err := DB.Exec(schema)
+	return err
 }
