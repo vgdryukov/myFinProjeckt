@@ -91,27 +91,6 @@ func GetDB() *sql.DB {
 	return DB
 }
 
-// AddTask добавляет новую задачу в базу данных
-// Возвращает ID добавленной задачи
-func AddTask(task *Task) (int64, error) {
-	query := `
-		INSERT INTO scheduler (date, title, comment, repeat) 
-		VALUES (?, ?, ?, ?)
-	`
-
-	result, err := DB.Exec(query, task.Date, task.Title, task.Comment, task.Repeat)
-	if err != nil {
-		return 0, err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
-}
-
 // migrateDB проверяет и обновляет схему БД при необходимости
 func migrateDB() error {
 	_, err := DB.Exec(schema)

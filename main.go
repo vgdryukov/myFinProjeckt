@@ -72,20 +72,22 @@ func main() {
 	srv := server.NewServer(config.WebDir, config.Port)
 	srv.Start()
 
-	fmt.Printf("\n🚀 Сервер успешно запущен!\n")
-	fmt.Printf("📁 Веб-директория: %s\n", config.WebDir)
-	fmt.Printf("🔌 Порт: %d\n", config.Port)
-	fmt.Printf("💾 База данных: %s\n", config.DBFile)
-	fmt.Printf("📝 API доступно:\n")
-	fmt.Printf("   - GET  /api/nextdate?now=&date=&repeat=\n")
-	fmt.Printf("   - POST /api/task\n")
-	fmt.Printf("\n🛑 Нажмите Ctrl+C для остановки сервера\n")
+	fmt.Printf("\nСервер успешно запущен!\n")
+	fmt.Printf("Веб-директория: %s\n", config.WebDir)
+	fmt.Printf("Порт: %d\n", config.Port)
+	fmt.Printf("База данных: %s\n", config.DBFile)
+	fmt.Printf("API доступно:\n")
+	fmt.Printf(" - GET  /api/nextdate?now=&date=&repeat=\n")
+	fmt.Printf(" - POST /api/task\n")
+	fmt.Printf(" - GET  /api/task?id= \n")
+	fmt.Printf(" - PUT  /api/task\n")
+	fmt.Printf(" - GET  /api/tasks?search= \n")
 
 	// Грациозное завершение
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	fmt.Println("\n🛑 Получен сигнал завершения. Останавливаем сервер...")
-	fmt.Println("✅ Сервер успешно остановлен")
+	fmt.Println("\nПолучен сигнал завершения. Останавливаем сервер...")
+	fmt.Println("Сервер успешно остановлен")
 }
