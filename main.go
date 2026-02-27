@@ -77,11 +77,13 @@ func main() {
 	fmt.Printf("Порт: %d\n", config.Port)
 	fmt.Printf("База данных: %s\n", config.DBFile)
 	fmt.Printf("API доступно:\n")
-	fmt.Printf(" - GET  /api/nextdate?now=&date=&repeat=\n")
-	fmt.Printf(" - POST /api/task\n")
-	fmt.Printf(" - GET  /api/task?id= \n")
-	fmt.Printf(" - PUT  /api/task\n")
-	fmt.Printf(" - GET  /api/tasks?search= \n")
+	fmt.Printf("   - GET  /api/nextdate?now=&date=&repeat=\n")
+	fmt.Printf("   - POST /api/task\n")
+	fmt.Printf("   - GET  /api/task?id= \n")
+	fmt.Printf("   - PUT  /api/task\n")
+	fmt.Printf("   - DELETE /api/task?id= \n")
+	fmt.Printf("   - POST /api/task/done?id= \n")
+	fmt.Printf("   - GET  /api/tasks?search= \n")
 
 	// Грациозное завершение
 	quit := make(chan os.Signal, 1)

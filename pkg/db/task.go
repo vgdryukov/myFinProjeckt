@@ -209,3 +209,31 @@ func convertDateFormat(dateStr string) string {
 	year := dateStr[6:10]
 	return year + month + day
 }
+
+// UpdateDate обновляет только дату задачи (для отметки о выполнении)
+func UpdateDate(id string, newDate string) error {
+	// Преобразуем строковый ID в int64 для запроса к БД
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return fmt.Errorf("некорректный идентификатор: %s", id)
+	}
+
+	query := `UPDATE scheduler SET date = ? WHERE id = ?`
+
+	result, err := DB.Exec(query, newDate, idInt)
+	if err != nil {
+		return err
+	}
+
+	// Проверяем, была ли обновлена хотя бы одна запись
+	count, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return fmt.Errorf("задача с ID %s не найдена", id)
+	}
+
+	return nil
+}
