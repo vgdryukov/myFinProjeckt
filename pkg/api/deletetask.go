@@ -6,28 +6,30 @@ import (
 	"net/http"
 )
 
-// deleteTaskHandler обрабатывает DELETE-запросы на /api/task?id=<id>
+// Функция deleteTaskHandler обрабатывает DELETE-запросы на /api/task?id=<id>
 func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
-	// Проверяем метод запроса
+
+	// Проверка: является ли метод запроса DELETE-запросом
 	if r.Method != http.MethodDelete {
 		writeError(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Получаем ID из параметров запроса
+	// Получение ID из параметров запроса
 	id := r.URL.Query().Get("id")
 	if id == "" {
 		writeError(w, "Не указан идентификатор", http.StatusBadRequest)
 		return
 	}
 
-	// Удаляем задачу из базы данных
+	// Удаление задачи из БД
 	err := db.DeleteTask(id)
 	if err != nil {
 		writeError(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	// Возвращаем пустой JSON при успехе
+	// Возвращение пустой JSON в случае успешного удаления задачи из БД
 	writeJSON(w, map[string]interface{}{})
+
 }

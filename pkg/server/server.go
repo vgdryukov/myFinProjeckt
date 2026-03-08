@@ -8,34 +8,38 @@ import (
 	"os"
 	"time"
 
-	"myfinproject/pkg/api" // импортируем пакет api
+	"myfinproject/pkg/api"
 )
 
+// Структура конфигурации сервера
 type Server struct {
 	webDir string
 	port   int
 }
 
-// NewServer создает новый экземпляр сервера
+// Функция NewServer создает новый экземпляр сервера
 func NewServer(webDir string, port int) *Server {
+
 	return &Server{
 		webDir: webDir,
 		port:   port,
 	}
 }
 
-// Start запускает сервер в фоновом режиме
+// Функция Start запускает сервер в фоновом режиме
 func (s *Server) Start() {
+
 	go func() {
-		// Проверяем существование папки web
+
+		// Проверка существования папки web
 		if _, err := os.Stat(s.webDir); os.IsNotExist(err) {
 			log.Printf("Предупреждение: папка %s не найдена", s.webDir)
 		}
 
-		// ИНИЦИАЛИЗИРУЕМ API ПЕРЕД ЗАПУСКОМ СЕРВЕРА
+		// Инициализация api до запуска сервера
 		api.Init()
 
-		// Создаем файловый сервер для статических файлов
+		// Создание файлового сервера для статических файлов
 		fileServer := http.FileServer(http.Dir(s.webDir))
 		http.Handle("/", fileServer)
 
@@ -50,11 +54,13 @@ func (s *Server) Start() {
 		}
 	}()
 
-	// Даем серверу время на запуск
+	// Приостанавливаем работу на 1 секунду, чтобы дать серверу время на запуск
 	time.Sleep(1 * time.Second)
+
 }
 
-// GetPort возвращает текущий порт сервера
+// Функция GetPort возвращает текущий порт сервера
 func (s *Server) GetPort() int {
+
 	return s.port
 }

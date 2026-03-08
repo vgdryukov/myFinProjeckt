@@ -16,9 +16,10 @@ type Task struct {
 	Repeat  string `json:"repeat"`  // правило повторения
 }
 
-// GetTask возвращает задачу по её ID
+// Функция GetTask возвращает задачу по её ID
 func GetTask(id string) (*Task, error) {
-	// Преобразуем строковый ID в int64 для запроса к БД
+
+	// Преобразование строкового ID в int64 для запроса к БД
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("некорректный идентификатор: %s", id)
@@ -30,6 +31,7 @@ func GetTask(id string) (*Task, error) {
 	var dbID int64
 
 	err = DB.QueryRow(query, idInt).Scan(&dbID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("задача с ID %s не найдена", id)
@@ -37,15 +39,16 @@ func GetTask(id string) (*Task, error) {
 		return nil, err
 	}
 
-	// Преобразуем ID в строку для JSON
+	// Преобразование ID int64 в строку для JSON
 	task.ID = strconv.FormatInt(dbID, 10)
 
 	return &task, nil
 }
 
-// UpdateTask обновляет существующую задачу
+// Функция UpdateTask обновляет существующую задачу
 func UpdateTask(task *Task) error {
-	// Преобразуем строковый ID в int64 для запроса к БД
+
+	// Преобразование строкового ID в int64 для запроса к БД
 	idInt, err := strconv.ParseInt(task.ID, 10, 64)
 	if err != nil {
 		return fmt.Errorf("некорректный идентификатор: %s", task.ID)
@@ -58,7 +61,7 @@ func UpdateTask(task *Task) error {
 		return err
 	}
 
-	// Проверяем, была ли обновлена хотя бы одна запись
+	// Проверка: была ли обновлена хотя бы одна запись
 	count, err := result.RowsAffected()
 	if err != nil {
 		return err
@@ -71,30 +74,36 @@ func UpdateTask(task *Task) error {
 	return nil
 }
 
-// Tasks возвращает список задач с ограничением по количеству
+// Функция Tasks возвращает список задач с ограничением по количеству
 // Если search параметр указан, выполняет поиск по заголовку, комментарию или дате
 func Tasks(limit int, search string) ([]*Task, error) {
+
 	var (
 		rows *sql.Rows
 		err  error
 	)
 
-	// Проверяем, есть ли параметр поиска
+	// Проверка: есть ли параметр поиска search
 	if search == "" {
 		// Простой запрос без поиска
 		query := `SELECT id, date, title, comment, repeat FROM scheduler 
 				  ORDER BY date LIMIT ?`
 		rows, err = DB.Query(query, limit)
+
 	} else {
+
 		// Поиск по заголовку, комментарию или дате
-		// Проверяем, является ли search датой в формате DD.MM.YYYY
+		// Проверка: является ли search датой в формате DD.MM.YYYY
 		if isDateSearch(search) {
-			// Преобразуем дату из формата DD.MM.YYYY в YYYYMMDD
+
+			// Преобразование даты из формата DD.MM.YYYY в YYYYMMDD
 			date := convertDateFormat(search)
 			query := `SELECT id, date, title, comment, repeat FROM scheduler 
 					  WHERE date = ? ORDER BY date LIMIT ?`
 			rows, err = DB.Query(query, date, limit)
+
 		} else {
+
 			// Поиск по подстроке в title или comment
 			searchPattern := "%" + search + "%"
 			query := `SELECT id, date, title, comment, repeat FROM scheduler 
@@ -107,9 +116,10 @@ func Tasks(limit int, search string) ([]*Task, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
-	// Создаем слайс задач (не nil, чтобы в JSON был [], а не null)
+	// Создание слайса задач (не nil, чтобы в JSON был [], а не null)
 	tasks := make([]*Task, 0)
 
 	for rows.Next() {
@@ -119,7 +129,8 @@ func Tasks(limit int, search string) ([]*Task, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Преобразуем int64 в строку для JSON
+
+		// Преобразование ID int64 в строку для JSON
 		task.ID = strconv.FormatInt(id, 10)
 		tasks = append(tasks, task)
 	}
@@ -131,9 +142,10 @@ func Tasks(limit int, search string) ([]*Task, error) {
 	return tasks, nil
 }
 
-// AddTask добавляет новую задачу в базу данных
+// Функция AddTask добавляет новую задачу в базу данных
 // Возвращает ID добавленной задачи
 func AddTask(task *Task) (int64, error) {
+
 	query := `
 		INSERT INTO scheduler (date, title, comment, repeat) 
 		VALUES (?, ?, ?, ?)
@@ -152,9 +164,10 @@ func AddTask(task *Task) (int64, error) {
 	return id, nil
 }
 
-// DeleteTask удаляет задачу по её ID
+// Функция DeleteTask удаляет задачу по её ID
 func DeleteTask(id string) error {
-	// Преобразуем строковый ID в int64 для запроса к БД
+
+	// Преобразование строкового ID в int64 для запроса к БД
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return fmt.Errorf("некорректный идентификатор: %s", id)
@@ -167,7 +180,7 @@ func DeleteTask(id string) error {
 		return err
 	}
 
-	// Проверяем, была ли удалена хотя бы одна запись
+	// Проверка: была ли удалена хотя бы одна запись
 	count, err := result.RowsAffected()
 	if err != nil {
 		return err
@@ -180,16 +193,18 @@ func DeleteTask(id string) error {
 	return nil
 }
 
-// isDateSearch проверяет, является ли строка датой в формате DD.MM.YYYY
+// Функция isDateSearch проверяет, является ли строка датой в формате DD.MM.YYYY
 func isDateSearch(s string) bool {
-	// Проверяем длину и формат
+
+	// Проверка длины и формата строки даты
 	if len(s) != 10 {
 		return false
 	}
 	if s[2] != '.' || s[5] != '.' {
 		return false
 	}
-	// Проверяем, что все символы до и после точек - цифры
+
+	// Проверка: все символы до и после точек - цифры
 	for i := 0; i < 10; i++ {
 		if i == 2 || i == 5 {
 			continue
@@ -198,21 +213,25 @@ func isDateSearch(s string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
-// convertDateFormat преобразует дату из формата DD.MM.YYYY в YYYYMMDD
+// Функция convertDateFormat преобразует дату из формата DD.MM.YYYY в YYYYMMDD
 func convertDateFormat(dateStr string) string {
+
 	// dateStr имеет формат DD.MM.YYYY
 	day := dateStr[0:2]
 	month := dateStr[3:5]
 	year := dateStr[6:10]
+
 	return year + month + day
 }
 
-// UpdateDate обновляет только дату задачи (для отметки о выполнении)
+// Функция UpdateDate обновляет только дату задачи (для отметки о выполнении)
 func UpdateDate(id string, newDate string) error {
-	// Преобразуем строковый ID в int64 для запроса к БД
+
+	// Преобразование строкового ID в int64 для запроса к БД
 	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return fmt.Errorf("некорректный идентификатор: %s", id)
@@ -225,7 +244,7 @@ func UpdateDate(id string, newDate string) error {
 		return err
 	}
 
-	// Проверяем, была ли обновлена хотя бы одна запись
+	// Проверка: была ли обновлена хотя бы одна запись
 	count, err := result.RowsAffected()
 	if err != nil {
 		return err
