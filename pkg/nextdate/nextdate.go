@@ -161,7 +161,7 @@ func handleWeekRule(now time.Time, date time.Time, parts []string) (string, erro
 	// Начинаем поиск со следующего дня после date
 	currentDate := date.AddDate(0, 0, 1)
 
-	// Ограничим поиск 400 днями (максимальный период)
+	// Ограничение: поиск 400 днями (максимальный период)
 	for i := 0; i < maxIterations; i++ {
 		// Получаем день недели в Go (0-6)
 		goWeekDay := int(currentDate.Weekday())
@@ -173,7 +173,7 @@ func handleWeekRule(now time.Time, date time.Time, parts []string) (string, erro
 			ourWeekDay = goWeekDay
 		}
 
-		// Проверяем, есть ли этот день в списке разрешенных
+		// Проверка: есть ли этот день в списке разрешенных
 		for _, allowedDay := range weekDays {
 			if ourWeekDay == allowedDay {
 				// Нашли подходящий день
@@ -185,14 +185,14 @@ func handleWeekRule(now time.Time, date time.Time, parts []string) (string, erro
 			}
 		}
 
-		// Переходим к следующему дню
+		// Переход к следующему дню
 		currentDate = currentDate.AddDate(0, 0, 1)
 	}
 
 	return "", errors.New("не удалось найти подходящую дату для правила w")
 }
 
-// handleMonthRule обрабатывает правило "m дни_месяца [месяцы]"
+// Функция handleMonthRule обрабатывает правило "m дни_месяца [месяцы]"
 // Примеры:
 // "m 4" - 4-е число каждого месяца
 // "m 1,15,25" - 1, 15 и 25 числа каждого месяца
@@ -270,7 +270,7 @@ func handleMonthRule(now time.Time, date time.Time, parts []string) (string, err
 				targetDay = allowedDay
 			}
 
-			if targetDay < 1 || targetDay > lastDay {
+			if targetDay > lastDay {
 				continue
 			}
 
@@ -285,9 +285,9 @@ func handleMonthRule(now time.Time, date time.Time, parts []string) (string, err
 	return "", errors.New("не удалось найти подходящую дату для правила m")
 }
 
-// getLastDayOfMonth возвращает последний день месяца для указанной даты
+// Функция getLastDayOfMonth возвращает последний день месяца для указанной даты
 func getLastDayOfMonth(t time.Time) int {
-	// Переходим к первому дню следующего месяца и отнимаем один день
+	// Переход к первому дню следующего месяца за вычетом одного дня
 	firstOfNextMonth := time.Date(t.Year(), t.Month()+1, 1, 0, 0, 0, 0, t.Location())
 	lastOfMonth := firstOfNextMonth.AddDate(0, 0, -1)
 	return lastOfMonth.Day()
