@@ -4,7 +4,6 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 )
 
 // Функция Init регистрирует все API обработчики
@@ -56,14 +55,4 @@ func writeError(w http.ResponseWriter, message string, statusCode int) {
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(map[string]string{"error": message})
 
-}
-
-// Функция afterNow проверяет, что дата date больше даты сегодняшней
-func afterNow(date, now time.Time) bool {
-
-	// Нормализуем даты до начала дня
-	date = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
-	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-
-	return date.After(now)
 }

@@ -1,7 +1,7 @@
-// main.go
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"myfinproject/pkg/db"
@@ -10,9 +10,10 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 )
 
-// Структура Config содержит все настройки приложения
+// Структура Config содержит настройки для работы сервера
 type Config struct {
 	WebDir string
 	Port   int
@@ -80,21 +81,31 @@ func main() {
 
 	// Создание и запуск сервера из пакета server
 	srv := server.NewServer(config.WebDir, config.Port)
-	srv.Start()
+
+	// Запускаем сервер и получаем канал для ошибок
+	errCh := make(chan error, 1)
+	go func() {
+		if err := srv.Start(); err != nil {
+			errCh <- err
+		}
+	}()
+
+	// Даем серверу немного времени на запуск
+	time.Sleep(100 * time.Millisecond)
 
 	fmt.Printf("\n✅ Сервер успешно запущен!\n")
-	fmt.Printf("     📁 Веб-директория: %s\n", config.WebDir)
-	fmt.Printf("     🔌 Порт: %d\n", config.Port)
-	fmt.Printf("     💾 База данных: %s\n", config.DBFile)
+	fmt.Printf("📁 Веб-директория: %s\n", config.WebDir)
+	fmt.Printf("🔌 Порт: %d\n", config.Port)
+	fmt.Printf("💾 База данных: %s\n", config.DBFile)
 
 	// Вывод в консоль информации об аутентификации
 	if envPassword := os.Getenv("TODO_PASSWORD"); envPassword != "" {
-		fmt.Printf("Аутентификация: ВКЛЮЧЕНА (требуется пароль)\n")
+		fmt.Printf("🔐 Аутентификация: ВКЛЮЧЕНА (требуется пароль)\n")
 	} else {
-		fmt.Printf("Аутентификация: ОТКЛЮЧЕНА\n")
+		fmt.Printf("🔓 Аутентификация: ОТКЛЮЧЕНА\n")
 	}
 
-	fmt.Printf("API доступно:\n")
+	fmt.Printf("\n📝 API доступно:\n")
 	fmt.Printf("    - POST /api/signin (для аутентификации)\n")
 	fmt.Printf("    - GET  /api/nextdate?now=&date=&repeat=\n")
 	fmt.Printf("    - POST /api/task\n")
@@ -106,12 +117,27 @@ func main() {
 
 	fmt.Printf("\n🛑 Нажмите Ctrl+C для остановки сервера\n")
 
-	// Грациозное завершение
+	// Канал для сигналов ОС
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
 
-	fmt.Println("\n🛑 Получен сигнал завершения. Останавливаем сервер...")
+	// Ожидаем либо сигнал ОС, либо ошибку сервера
+	select {
+	case <-quit:
+		fmt.Println("\n🛑 Получен сигнал завершения. Останавливаем сервер...")
+	case err := <-errCh:
+		log.Printf("Ошибка сервера: %v", err)
+		fmt.Println("\n🛑 Сервер остановлен из-за ошибки")
+	}
+
+	// Создание контекста с таймаутом для graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Останавливаем сервер gracefully
+	if err := srv.Stop(ctx); err != nil {
+		log.Printf("Ошибка при остановке сервера: %v", err)
+	}
+
 	fmt.Println("✅ Сервер успешно остановлен")
-
 }

@@ -80,13 +80,13 @@ func checkDate(task *db.Task) error {
 		}
 
 		// Если дата задачи меньше сегодняшней, используем вычисленную дату
-		if !afterNow(t, now) {
+		if !nextdate.AfterNow(t, now) {
 			task.Date = next
 		}
 
 	} else {
 		// Если правило не указано и дата меньше сегодняшней, ставим сегодняшнюю дату
-		if !afterNow(t, now) {
+		if !nextdate.AfterNow(t, now) {
 			task.Date = today
 		}
 	}

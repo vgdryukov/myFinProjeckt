@@ -18,7 +18,7 @@ const (
 
 // afterNow проверяет, что дата date больше даты now
 // Сравниваются только даты, без времени
-func afterNow(date, now time.Time) bool {
+func AfterNow(date, now time.Time) bool {
 	// Получаем компоненты даты (год, месяц, день)
 	y1, m1, d1 := date.Date()
 	y2, m2, d2 := now.Date()
@@ -102,7 +102,7 @@ func handleDayRule(now time.Time, date time.Time, parts []string) (string, error
 	// Ищем следующую дату
 	for {
 		date = date.AddDate(0, 0, interval)
-		if afterNow(date, now) {
+		if AfterNow(date, now) {
 			break
 		}
 		// Защита от бесконечного цикла
@@ -119,7 +119,7 @@ func handleYearRule(now time.Time, date time.Time) (string, error) {
 	// Ищем следующую дату
 	for {
 		date = date.AddDate(1, 0, 0)
-		if afterNow(date, now) {
+		if AfterNow(date, now) {
 			break
 		}
 		// Защита от бесконечного цикла
@@ -177,7 +177,7 @@ func handleWeekRule(now time.Time, date time.Time, parts []string) (string, erro
 		for _, allowedDay := range weekDays {
 			if ourWeekDay == allowedDay {
 				// Нашли подходящий день
-				if afterNow(currentDate, now) {
+				if AfterNow(currentDate, now) {
 					return currentDate.Format(DateFormat), nil
 				}
 				// Если дата меньше now, продолжаем поиск
@@ -274,7 +274,7 @@ func handleMonthRule(now time.Time, date time.Time, parts []string) (string, err
 				continue
 			}
 
-			if currentDay == targetDay && afterNow(currentDate, now) {
+			if currentDay == targetDay && AfterNow(currentDate, now) {
 				return currentDate.Format(DateFormat), nil
 			}
 		}
