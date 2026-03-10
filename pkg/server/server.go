@@ -1,3 +1,5 @@
+// pkg/server/server.go
+// Управление HTTP-сервером
 package server
 
 import (

@@ -1,4 +1,5 @@
-// pkg/api/deletetask.go
+// pkg/api/task_delete.go
+// Удаление задачи
 package api
 
 import (

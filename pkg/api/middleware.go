@@ -1,4 +1,5 @@
 // pkg/api/middleware.go
+// Аутентификация, проверка и валидация токена
 package api
 
 import (

@@ -1,4 +1,5 @@
-// pkg/api/taskdone.go
+// pkg/api/task_done.go
+// Отметка задачи как выполненной
 package api
 
 import (

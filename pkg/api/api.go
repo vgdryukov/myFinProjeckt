@@ -1,4 +1,5 @@
 // pkg/api/api.go
+// Регитрация маршрутов и общие функции API
 package api
 
 import (

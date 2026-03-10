@@ -1,4 +1,5 @@
 // pkg/auth/auth.go
+// Аутентификация и работа с JWT-токенами
 package auth
 
 import (

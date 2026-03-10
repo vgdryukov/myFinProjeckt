@@ -1,4 +1,5 @@
-// pkg/api/tasks.go
+// pkg/api/task_list.go
+// Получение списка задач
 package api
 
 import (

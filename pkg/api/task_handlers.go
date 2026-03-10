@@ -1,4 +1,5 @@
-// pkg/api/task.go
+// pkg/api/task_handlers.go
+// Операции с одной задачей
 package api
 
 import (
@@ -30,8 +31,8 @@ func getTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Функция updateTaskHandler обрабатывает PUT-запросы на /api/task
+// updateTaskHandler обрабатывает PUT-запросы на /api/task
 func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
-
 	// Декодирование JSON из тела запроса
 	var task db.Task
 	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
@@ -63,7 +64,6 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Возвращение пустого JSON в случае успеха обновления задачи в базе данных
+	// Возвращение пустого JSON
 	writeJSON(w, map[string]interface{}{})
-
 }

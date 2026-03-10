@@ -1,4 +1,5 @@
-// pkg/db/task.go
+// pkg/db/task_db.go
+// Операции с задачами в базе данных
 package db
 
 import (

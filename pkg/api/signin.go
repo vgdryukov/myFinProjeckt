@@ -1,4 +1,5 @@
 // pkg/api/signin.go
+// Аутентификация пользователя
 package api
 
 import (

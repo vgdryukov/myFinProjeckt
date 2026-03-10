@@ -1,4 +1,5 @@
-// pkg/api/nextdate.go
+// pkg/api/nextDate.go
+// API для вычисления следующей даты
 package api
 
 import (
