@@ -1,4 +1,3 @@
-// Главный файл приложения, "точка входа"
 package main
 
 import (
@@ -10,12 +9,12 @@ import (
 	"myfinproject/pkg/server"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
 )
 
-// Структура Config содержит настройки для работы сервера
 type Config struct {
 	WebDir string
 	Port   int
@@ -25,6 +24,10 @@ type Config struct {
 var config Config
 
 func init() {
+	// Настройка логирования в файл
+	if err := setupLogging(); err != nil {
+		log.Printf("Предупреждение: не удалось настроить логирование в файл: %v", err)
+	}
 
 	// Задаём значения полей структуры конфигурации сервера по умолчанию
 	config = Config{
@@ -33,7 +36,7 @@ func init() {
 		DBFile: "scheduler.db",
 	}
 
-	// Переопределение порта из переменных окружения, если эта переменая определена
+	// Переопределение порта из переменных окружения
 	if envPort := os.Getenv("TODO_PORT"); envPort != "" {
 		if p, err := strconv.Atoi(envPort); err == nil {
 			config.Port = p
@@ -44,13 +47,13 @@ func init() {
 		}
 	}
 
-	// Переопределение путя к файлу базы данных из переменных окружения, если эта переменая определена
+	// Переопределение пути к файлу базы данных
 	if envDBFile := os.Getenv("TODO_DBFILE"); envDBFile != "" {
 		config.DBFile = envDBFile
 		log.Printf("Установлен путь к БД из окружения: %s", config.DBFile)
 	}
 
-	// Переопределение webDir из окружения (опционально), если эта переменая определена
+	// Переопределение webDir из окружения
 	if envWebDir := os.Getenv("TODO_WEB_DIR"); envWebDir != "" {
 		config.WebDir = envWebDir
 		log.Printf("Установлена веб-директория из окружения: %s", config.WebDir)
@@ -62,27 +65,40 @@ func init() {
 	} else {
 		log.Printf("Аутентификация отключена (пароль не установлен)")
 	}
-
 }
 
-func main() {
+// Функция setupLogging настраивает запись логов в файл
+func setupLogging() error {
+	// Определяем путь к логам (сначала проверяем переменную окружения)
+	logPath := os.Getenv("LOG_FILE")
+	if logPath == "" {
+		logPath = "/app/logs/app.log" // абсолютный путь внутри контейнера
+	}
+
+	// Создаем директорию для логов, если её нет
+	logDir := filepath.Dir(logPath)
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		return fmt.Errorf("не удалось создать директорию логов %s: %w", logDir, err)
+	}
 
 	// Открываем файл для логов
-	logFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatal("Ошибка открытия файла логов:", err)
+		return fmt.Errorf("не удалось открыть файл логов %s: %w", logPath, err)
 	}
-	defer logFile.Close()
 
-	// Настраиваем вывод логов в файл и в консоль одновременно
+	// Настраиваем вывод логов одновременно в консоль и в файл
 	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	// Вывод в лог информации о конфигурации работы сервера
+	log.Printf("Логирование настроено в файл: %s", logPath)
+	return nil
+}
+
+func main() {
 	log.Printf("Запуск с конфигурацией: Порт=%d, БД=%s, WebDir=%s",
 		config.Port, config.DBFile, config.WebDir)
 
-	// Инициализация базы данных
 	if err := db.Init(config.DBFile); err != nil {
 		log.Fatalf("Ошибка инициализации базы данных: %v", err)
 	}
@@ -92,10 +108,8 @@ func main() {
 		}
 	}()
 
-	// Создание и запуск сервера из пакета server
 	srv := server.NewServer(config.WebDir, config.Port)
 
-	// Запускаем сервер и получаем канал для ошибок
 	errCh := make(chan error, 1)
 	go func() {
 		if err := srv.Start(); err != nil {
@@ -103,15 +117,14 @@ func main() {
 		}
 	}()
 
-	// Даем серверу немного времени на запуск
 	time.Sleep(100 * time.Millisecond)
 
 	fmt.Printf("\n✅ Сервер успешно запущен!\n")
 	fmt.Printf("📁 Веб-директория: %s\n", config.WebDir)
 	fmt.Printf("🔌 Порт: %d\n", config.Port)
 	fmt.Printf("💾 База данных: %s\n", config.DBFile)
+	fmt.Printf("📝 Логи сохраняются в: /app/logs/app.log (в контейнере)\n")
 
-	// Вывод в консоль информации об аутентификации
 	if envPassword := os.Getenv("TODO_PASSWORD"); envPassword != "" {
 		fmt.Printf("🔐 Аутентификация: ВКЛЮЧЕНА (требуется пароль)\n")
 	} else {
@@ -130,11 +143,9 @@ func main() {
 
 	fmt.Printf("\n🛑 Нажмите Ctrl+C для остановки сервера\n")
 
-	// Канал для сигналов ОС
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	// Ожидаем либо сигнал ОС, либо ошибку сервера
 	select {
 	case <-quit:
 		fmt.Println("\n🛑 Получен сигнал завершения. Останавливаем сервер...")
@@ -143,11 +154,9 @@ func main() {
 		fmt.Println("\n🛑 Сервер остановлен из-за ошибки")
 	}
 
-	// Создание контекста с таймаутом для graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Останавливаем сервер gracefully
 	if err := srv.Stop(ctx); err != nil {
 		log.Printf("Ошибка при остановке сервера: %v", err)
 	}
