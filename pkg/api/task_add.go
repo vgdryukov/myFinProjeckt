@@ -50,30 +50,34 @@ func checkDate(task *db.Task) error {
 	now := time.Now()
 	today := now.Format(nextdate.DateFormat)
 
+	// Если дата не указана, ставим сегодняшнюю дату
 	if task.Date == "" {
 		task.Date = today
+		return nil
 	}
 
+	// Парсим дату
 	t, err := time.Parse(nextdate.DateFormat, task.Date)
 	if err != nil {
 		return errors.New("некорректный формат даты. Ожидается YYYYMMDD")
 	}
 
-	if task.Repeat != "" {
-		// Для новой задачи с правилом повторения:
-		// если дата в прошлом, ищем ближайшую будущую дату от СЕГОДНЯ
-		if !nextdate.AfterNow(t, now) {
-			next, err := nextdate.NextDate(now, today, task.Repeat)
-			if err != nil {
-				return err
-			}
-			task.Date = next
-		}
+	// Если дата сегодня или в будущем - ничего не меняем!
+	if nextdate.AfterNow(t, now) || task.Date == today {
+		return nil
+	}
+
+	// Если дата в прошлом
+	if task.Repeat == "" {
+		// Без правила - ставим сегодня
+		task.Date = today
 	} else {
-		// Без правила: если дата в прошлом, ставим сегодня
-		if !nextdate.AfterNow(t, now) {
-			task.Date = today
+		// С правилом - вычисляем следующую дату от сегодня
+		next, err := nextdate.NextDate(now, today, task.Repeat)
+		if err != nil {
+			return err
 		}
+		task.Date = next
 	}
 
 	return nil

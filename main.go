@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"myfinproject/pkg/db"
 	"myfinproject/pkg/server"
@@ -65,6 +66,17 @@ func init() {
 }
 
 func main() {
+
+	// Открываем файл для логов
+	logFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal("Ошибка открытия файла логов:", err)
+	}
+	defer logFile.Close()
+
+	// Настраиваем вывод логов в файл и в консоль одновременно
+	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
 	// Вывод в лог информации о конфигурации работы сервера
 	log.Printf("Запуск с конфигурацией: Порт=%d, БД=%s, WebDir=%s",
