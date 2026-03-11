@@ -1,5 +1,5 @@
 # Этап 1: Сборка приложения
-FROM golang:1.24-alpine AS builder
+FROM golang:1.24.10-alpine AS builder
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
@@ -40,14 +40,15 @@ RUN mkdir -p /app/data /app/logs && chown -R appuser:appuser /app
 # Переключаемся на непривилегированного пользователя
 USER appuser
 
-# Указываем порт, который будет слушать приложение
-EXPOSE 7540
-
-# Переменные окружения (можно переопределить при запуске)
+# Указываем значения по умолчанию
 ENV TODO_PORT=7540
 ENV TODO_DBFILE=/app/data/scheduler.db
+
 # ENV TODO_PASSWORD=your_password_here # раскомментируйте для включения аутентификации
 # ENV TODO_SECRET=your_secret_key_here # секретный ключ для JWT
+
+# EXPOSE зависит от переменной окружения
+EXPOSE ${TODO_PORT}
 
 # Команда для запуска приложения
 CMD ["./myfinproject"]

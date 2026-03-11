@@ -12,28 +12,42 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var lifeTokenConfig = 8 // Время жизни токена установлено 8 часов
+var (
+	lifeTokenConfig = 8
+	authEnabled     bool
+	secretKey       []byte
+	password        string
+	passwordHash    string
+)
 
-// Claims структура данных JWT-токена
+// Функция init загружает конфигурацию
+func init() {
+	password = os.Getenv("TODO_PASSWORD")
+	authEnabled = password != ""
+
+	secret := os.Getenv("TODO_SECRET")
+	if secret == "" {
+		secret = "default-secret-key-change-in-production"
+	}
+	secretKey = []byte(secret)
+
+	if authEnabled {
+		hash := sha256.Sum256([]byte(password))
+		passwordHash = hex.EncodeToString(hash[:])
+	}
+}
+
 type Claims struct {
 	PasswordHash string `json:"password_hash"`
 	jwt.RegisteredClaims
 }
 
-// Функция GenerateToken создает JWT-токен на основе пароля
-func GenerateToken(password string) (string, error) {
-
-	// Получение секретного ключа из переменной окружения, или используем значение по умолчанию
-	secret := os.Getenv("TODO_SECRET")
-	if secret == "" {
-		secret = "default-secret-key-change-in-production"
+func GenerateToken(pass string) (string, error) {
+	// Используем глобальные переменные
+	if authEnabled && pass != password {
+		return "", errors.New("неверный пароль")
 	}
 
-	// Создание хэша пароля
-	hash := sha256.Sum256([]byte(password))
-	passwordHash := hex.EncodeToString(hash[:])
-
-	// Устанавка времени окончания жизни токена
 	expirationTime := time.Now().Add(time.Duration(lifeTokenConfig) * time.Hour)
 
 	claims := &Claims{
@@ -44,11 +58,8 @@ func GenerateToken(password string) (string, error) {
 		},
 	}
 
-	// Создание токена
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Подписание токена
-	tokenString, err := token.SignedString([]byte(secret))
+	tokenString, err := token.SignedString(secretKey)
 	if err != nil {
 		return "", err
 	}
@@ -56,43 +67,26 @@ func GenerateToken(password string) (string, error) {
 	return tokenString, nil
 }
 
-// Функция ValidateToken проверяет валидность JWT токена
 func ValidateToken(tokenString string) (bool, error) {
-
-	// Получение пароля из переменной окружения
-	password := os.Getenv("TODO_PASSWORD")
-	if password == "" {
-		// Если пароль не установлен, значит аутентификация не требуется
+	// Используем глобальную переменную
+	if !authEnabled {
 		return true, nil
 	}
 
-	// Получение секретного ключа из переменной окружения
-	secret := os.Getenv("TODO_SECRET")
-	if secret == "" {
-		secret = "default-secret-key-change-in-production"
-	}
-
-	// Создание хэша текущего пароля для сравнения
-	currentHash := sha256.Sum256([]byte(password))
-	currentHashStr := hex.EncodeToString(currentHash[:])
-
-	// Парсим токен
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		// Проверка что методом подписи токена является HMAC
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("неверный метод подписи")
 		}
-		return []byte(secret), nil
+		return secretKey, nil
 	})
 
 	if err != nil {
 		return false, err
 	}
 
-	// Проверка claims
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		// Сравниваем хэш пароля из токена с текущим
-		if claims.PasswordHash != currentHashStr {
+		// Сравнение с предвычисленным хэшем
+		if claims.PasswordHash != passwordHash {
 			return false, errors.New("пароль был изменен")
 		}
 		return true, nil
@@ -101,8 +95,6 @@ func ValidateToken(tokenString string) (bool, error) {
 	return false, errors.New("невалидный токен")
 }
 
-// Функция IsAuthEnabled проверяет, включена ли аутентификация
 func IsAuthEnabled() bool {
-
-	return os.Getenv("TODO_PASSWORD") != ""
+	return authEnabled
 }

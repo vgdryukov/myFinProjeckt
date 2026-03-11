@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+const maximumTasks int = 50
+
 // TasksResp структура ответа со списком задач
 type TasksResp struct {
 	Tasks []*db.Task `json:"tasks"`
@@ -25,7 +27,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
 
 	// Получение задач из базы данных (максимум 50)
-	tasks, err := db.Tasks(50, search)
+	tasks, err := db.Tasks(maximumTasks, search)
 	if err != nil {
 		writeError(w, "Ошибка при получении задач: "+err.Error(), http.StatusInternalServerError)
 		return
