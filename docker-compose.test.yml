@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    networks:
+      - test-network
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+  tests:
+    image: golang:1.24-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    depends_on:
+      - app
+    networks:
+      - test-network
+    environment:
+      - TODO_API_URL=http://app:7540
+    command: >
+      sh -c "go test ./... -v"
+
+networks:
+  test-network:
