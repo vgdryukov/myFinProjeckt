@@ -36,7 +36,7 @@ myfinproject/
 │   │   ├── api.go           # Регистрация маршрутов
 │   │   ├── middleware.go    # Аутентификация
 │   │   ├── signin.go        # Вход в систему
-│   │   ├── nextDate.go      # API для вычисления дат
+│   │   ├── nextdate.go      # API для вычисления дат
 │   │   ├── task_add.go      # Добавление задачи
 │   │   ├── task_handlers.go # Получение/обновление задачи
 │   │   ├── task_list.go     # Список задач
@@ -48,7 +48,7 @@ myfinproject/
 │   │   ├── db.go             # Подключение к SQLite
 │   │   └── task_db.go        # CRUD операции с задачами
 │   ├── nextdate/             # Логика повторения задач
-│   │   └── calc_nextDate.go  # Вычисление следующих дат
+│   │   └── calc_next_date.go  # Вычисление следующих дат
 │   └── server/                # HTTP сервер
 │       └── server.go          # Запуск и остановка сервера
 └── tests/                    # Интеграционные тесты
